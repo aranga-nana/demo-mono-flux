@@ -54,17 +54,17 @@ public class ExampleService {
        var out = flux.flatMap( s -> {
            // random processing time // WebClient call :)
            int delay = RandomUtils.nextInt(1,10);
-           return Flux.just("Number " + s +"(delay: "+ delay + ")").delaySequence(Duration.ofSeconds(delay)).log();
+           return Flux.just("Number " + s +" (delay: "+ delay + ")").delaySequence(Duration.ofSeconds(delay)).log();
        }).log();
-       List<String> list = out.collectList().block();
+       Mono<String> logStr = Mono.just("numbers =>  %s |").delayElement(Duration.ofSeconds(5)).log();
+       Mono<List<String>> list = out.collectList().log();
+       Mono<String> logMessage = logStr.zipWith(list).map(tuple -> {
+           return String.format(tuple.getT1(), tuple.getT2()
+                   .stream().collect(Collectors.joining(",")));
+       }).log();
+       var message = logMessage.block();
        long duration = System.currentTimeMillis() - start;
-       logger.info("List {} ", list);
-       var result = list.stream().collect(Collectors.joining(", "));
-       logger.info("Result : {} time: {} s.", result, (duration /1000));
-
-
-
-
+       logger.info("{} time: {} s.", message, (duration /1000));
 
     }
 }
