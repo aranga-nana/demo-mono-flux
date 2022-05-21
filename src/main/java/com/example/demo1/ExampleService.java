@@ -60,7 +60,7 @@ public class ExampleService {
        Mono<List<String>> list = out.collectList().log();
        Mono<String> logMessage = logStr.zipWith(list).map(tuple -> {
            return String.format(tuple.getT1(), tuple.getT2()
-                   .stream().collect(Collectors.joining(",")));
+                   .stream().collect(Collectors.joining(", ")));
        }).log();
        var message = logMessage.block();
        long duration = System.currentTimeMillis() - start;
