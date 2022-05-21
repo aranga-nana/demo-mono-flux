@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,17 +47,20 @@ public class ExampleService {
         long start = System.currentTimeMillis();
 
         Mono<ImmutableList<String>> listMono = Mono
-                .just(ImmutableList.of("1","2","3","4","5"))
-                .delayElement(Duration.ofSeconds(1));
+                .just(ImmutableList.of("1","2","3","4","5","6","7","8","9"));
 
-        Flux<String> flux = listMono.flatMapMany(Flux::fromIterable)
-                .log().delaySequence(Duration.ofSeconds(1));
-       Flux<String> out = flux.flatMap( s -> {
-           int delay = RandomUtils.nextInt(1,5);
-           return Flux.just("Number " + s).delaySequence(Duration.ofSeconds(delay));
-       });
-       List<String> list = out.collectList().log().block();
-       logger.info("List {}", list);
+       var flux = listMono.flatMapMany(Flux::fromIterable)
+                .log();
+       var out = flux.flatMap( s -> {
+           // random processing time // WebClient call :)
+           int delay = RandomUtils.nextInt(1,10);
+           return Flux.just("Number " + s +"(delay: "+ delay + ")").delaySequence(Duration.ofSeconds(delay)).log();
+       }).log();
+       List<String> list = out.collectList().block();
+       long duration = System.currentTimeMillis() - start;
+       logger.info("List {} ", list);
+       var result = list.stream().collect(Collectors.joining(", "));
+       logger.info("Result : {} time: {} s.", result, (duration /1000));
 
 
 
